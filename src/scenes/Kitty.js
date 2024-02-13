@@ -1,6 +1,17 @@
 class Kitty extends Phaser.Scene {
     constructor() {
         super("kittyScene")
+        this.scoreConfig = {
+          fontFamily: 'Times New Roman',
+          fontSize: '32px',
+        //  backgroundColor: '#F4CCCC',
+          align: 'center',
+          padding: {
+              top: 5,
+              bottom: 5,
+          },
+          fixedWidth: 1000
+      };
     }
 
     init(){
@@ -18,18 +29,21 @@ class Kitty extends Phaser.Scene {
     }
 
     create() {
+        this.physics.world.drawDebug = false;
+        keyRESET = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
         this.sprite = this.add.tileSprite(0, 0, 800, 500, 'bg').setOrigin(0, 0);
-        this.bow01 = new Bow(this, game.config.width/0.2, game.config.height/1.05 - borderUIsize - borderPadding, 'bow').setOrigin(0.5, 8);
-        this.bow02 = new Bow(this, game.config.width/0.3, game.config.height + 100 - borderUIsize - borderPadding, 'bow').setOrigin(0.5, 8);
-        this.rock = new Rock(this, game.config.width/0.3, game.config.height + 100 - borderUIsize - borderPadding, 'rock').setOrigin(0.5, 8);
-        this.bow03 = new Bow(this, game.config.width/0.4, game.config.height + 40 - borderUIsize - borderPadding, 'bow').setOrigin(0.5, 8);
+        const randomX = Phaser.Math.Between(game.config.width/0.2, game.config.width * 0.4);
+        const randomY = Phaser.Math.Between(game.config.height/1.05, game.config.height + 100);
+        this.bow01 = new Bow(this, randomX, randomY - borderUIsize - borderPadding, 'bow', 0, 10).setOrigin(0.5, 8);
+        this.bow02 = new Bow(this, randomX, randomY - borderUIsize - borderPadding, 'bow', 0, 10).setOrigin(0.5, 8);
+        this.rock = new Rock(this, randomX, randomY - borderUIsize - borderPadding, 'rock').setOrigin(0.5, 8);
         this.add.rectangle(0, 0, game.config.width, borderUIsize / 2, 0xF4CCCC).setOrigin(0, 0);
         this.add.rectangle(0, game.config.height - borderUIsize / 2, game.config.width, borderUIsize, 0xF4CCCC).setOrigin(0, 0);
         this.add.rectangle(0, 0, borderUIsize / 2, game.config.height, 0xF4CCCC).setOrigin(0, 0);
         this.add.rectangle(game.config.width - borderUIsize / 2, 0, borderUIsize, game.config.height, 0xF4CCCC).setOrigin(0, 0);
-       
-        
-        this.cameras.main.setBackgroundColor(0xDDDDDD)
+        this.gameOver = false;
+        this.p1Score = 0;
+        this.scoreLeft = this.add.text(200, 10, "Score: " + this.p1Score, this.scoreConfig);
         // create anims
         this.anims.create({
           key: 'idle-Down', 
@@ -85,7 +99,7 @@ class Kitty extends Phaser.Scene {
               this.physics.world.setBounds(0, middleThirdStartY, game.config.width, middleThirdHeight);
               this.player.body.setSize(30, 30).setOffset(4, 4)
               cursors = this.input.keyboard.createCursorKeys()
-
+              
              
           }
       
@@ -109,20 +123,50 @@ class Kitty extends Phaser.Scene {
                   playerVector.y = 1
                   playerDirection = 'down'
               }
-              this.bow01.update()
-              this.bow02.update()
-              this.bow03.update()
+              if (Phaser.Input.Keyboard.JustDown(keyRESET))
+              {
+                this.scene.start("titleScene");
+              }
+              if (this.checkCollisionR(this.player, this.rock)) {
 
-              if (this.checkCollision(this.player, this.bow01)) {
-                console.log('kaboom ship 03')
+                this.gameOver = true;
+                this.add.text(game.config.width / 2, game.config.height / 2, 'GAME OVER', this.scoreConfig).setOrigin(0.5);
+                this.add.text(game.config.width / 2, game.config.height / 2 + 64, 'Press (R) to Reset', this.scoreConfig).setOrigin(0.5);
+                return;
               }
-              if (this.checkCollision(this.player, this.bow02)) {
-                console.log('kaboom ship 02')
+              this.bow01.update()
+              if (this.bow01.x <= 0) {
+                this.bow01.setY(Phaser.Math.Between(game.config.height/1.05, game.config.height + 25));
+                this.bow01.reset()
               }
-              if (this.checkCollision(this.player, this.bow03)) {
-                console.log('kaboom ship 01')
+              this.bow02.update()
+              if (this.bow02.x <= 0) {
+                this.bow02.setY(Phaser.Math.Between(game.config.height/1.05, game.config.height + 25));
+                this.bow02.reset()
               }
-              
+              this.rock.update()
+              if (this.rock.x <= 0) {
+                this.rock.setY(Phaser.Math.Between(game.config.height/1.05, game.config.height + 25));
+                this.rock.reset()
+              }
+
+              if (this.checkCollisionB(this.player, this.bow01)) {
+                this.p1Score += this.bow01.points;
+                this.scoreLeft.text = "Score: " + this.p1Score
+              }
+              if (this.checkCollisionB(this.player, this.bow02)) {
+                // this.p1Score += 10;
+                this.p1Score += this.bow02.points;
+                this.scoreLeft.text = "Score: " + this.p1Score
+              }
+              // if (!this.gameOver)
+              // {
+              //   this.bow01.update()
+              // //  this.bow01.setX(Phaser.Math.Between(game.config.width * 0.2, game.config.width * 0.4));
+              //   this.rock.update()
+              // //  this.rock.setX(Phaser.Math.Between(game.config.width * 0.2, game.config.width * 0.4));
+              //   //  this.rock.reset()
+              // }
 
               playerVector.normalize()
       
@@ -132,12 +176,21 @@ class Kitty extends Phaser.Scene {
               playerVector.length() ? playerMovement = 'walk' : playerMovement = 'idle'
               this.player.play(playerMovement + '-' + playerDirection, true)
           }
-
-          checkCollision(kittysheet, bow) {
+          checkCollisionB(kittysheet, bow) {
             if (kittysheet.x < bow.x + bow.width && 
               kittysheet.x + kittysheet.width > bow.x && 
-              kittysheet.y < bow.y + bow.height &&
-              kittysheet.height + kittysheet.y > bow.y) {
+              kittysheet.y + 250 < bow.y + bow.height &&
+              kittysheet.height + kittysheet.y + 250 > bow.y) {
+              return true
+            } else {
+              return false
+            }
+          }
+          checkCollisionR(kittysheet, rock) {
+            if (kittysheet.x < rock.x + rock.width && 
+              kittysheet.x + kittysheet.width > rock.x && 
+              kittysheet.y + 250 < rock.y + rock.height &&
+              kittysheet.height + kittysheet.y + 250 > rock.y) {
               return true
             } else {
               return false

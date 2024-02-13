@@ -4,6 +4,7 @@ class Title extends Phaser.Scene {
         super("titleScene")
     }
     preload() {
+        this.load.audio('beep', './assets/audio/beep.wav')
         this.load.image('kittycover', './assets/img/kittycover.png')
     }
     create() {
@@ -16,7 +17,9 @@ class Title extends Phaser.Scene {
     update() {
         if (Phaser.Input.Keyboard.JustDown(keyUP))
         {
+            this.sound.play('beep');
             this.scene.start("kittyScene");
+
         }
     }
 }
