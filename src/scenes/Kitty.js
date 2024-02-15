@@ -140,6 +140,14 @@ class Kitty extends Phaser.Scene {
                 this.add.text(game.config.width / 2, game.config.height / 2 + 64, 'Press (R) to Reset and (C) for Credits', this.scoreConfig).setOrigin(0.5);
                 return;
               }
+              if (this.p1Score > 100)
+              {
+                this.sound.play('lvlup');
+              }
+              if (this.p1Score > 200)
+              {
+                this.sound.play('lvlup');
+              }
               this.bow01.update()
               if (this.bow01.x <= 0) {
                 this.bow01.setY(Phaser.Math.Between(game.config.height/1.05, game.config.height + 25));
