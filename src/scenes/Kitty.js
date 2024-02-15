@@ -4,7 +4,6 @@ class Kitty extends Phaser.Scene {
         this.scoreConfig = {
           fontFamily: 'Times New Roman',
           fontSize: '32px',
-        //  backgroundColor: '#F4CCCC',
           align: 'center',
           padding: {
               top: 5,
@@ -18,10 +17,13 @@ class Kitty extends Phaser.Scene {
        this.PLAYER_VELOCITY = 350
     }
     preload() {
+      this.load.audio('lvlup', './assets/audio/lvlup.wav');
+      this.load.audio('end', './assets/audio/end.wav');
+      this.load.audio('collect', './assets/audio/collect.wav');
       this.load.image('bow', './assets/img/bow.png');
       this.load.image('rock', './assets/img/rock.png');
       this.load.image('bg', './assets/img/bg.png')
-        this.load.spritesheet('kittysheet', './assets/img/kittysheet.png', 
+        this.load.spritesheet('kittysheet', './assets/img/kittysheet5.png', 
         {
         frameWidth: 30,
         frameHeight: 30
@@ -31,9 +33,10 @@ class Kitty extends Phaser.Scene {
     create() {
         this.physics.world.drawDebug = false;
         keyRESET = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+        keyCREDITS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
         this.sprite = this.add.tileSprite(0, 0, 800, 500, 'bg').setOrigin(0, 0);
         const randomX = Phaser.Math.Between(game.config.width/0.2, game.config.width * 0.4);
-        const randomY = Phaser.Math.Between(game.config.height/1.05, game.config.height + 100);
+        const randomY = Phaser.Math.Between(game.config.height/1.05, game.config.height + 25);
         this.bow01 = new Bow(this, randomX, randomY - borderUIsize - borderPadding, 'bow', 0, 10).setOrigin(0.5, 8);
         this.bow02 = new Bow(this, randomX, randomY - borderUIsize - borderPadding, 'bow', 0, 10).setOrigin(0.5, 8);
         this.rock = new Rock(this, randomX, randomY - borderUIsize - borderPadding, 'rock').setOrigin(0.5, 8);
@@ -50,8 +53,8 @@ class Kitty extends Phaser.Scene {
           frameRate: 0,
           repeat: -1,
           frames: this.anims.generateFrameNumbers('kittysheet', {
-          start: 1,
-          end: 1
+          start: 2,
+          end: 2
             })
           })
       
@@ -78,8 +81,8 @@ class Kitty extends Phaser.Scene {
               frameRate: 5,
               repeat: -1,
               frames: this.anims.generateFrameNumbers('kittysheet', {
-                  start: 2,
-                  end: 0
+                  start: 3,
+                  end: 5
               })
             })
             this.anims.create({
@@ -91,6 +94,7 @@ class Kitty extends Phaser.Scene {
                   end: 0
               })
             })
+            
       
               this.player = this.physics.add.sprite(game.config.width/12, game.config.height/2, 'kittysheet', 1).setScale(3)
               this.player.body.setCollideWorldBounds(true)
@@ -99,8 +103,6 @@ class Kitty extends Phaser.Scene {
               this.physics.world.setBounds(0, middleThirdStartY, game.config.width, middleThirdHeight);
               this.player.body.setSize(30, 30).setOffset(4, 4)
               cursors = this.input.keyboard.createCursorKeys()
-              
-             
           }
       
           update() {
@@ -127,11 +129,15 @@ class Kitty extends Phaser.Scene {
               {
                 this.scene.start("titleScene");
               }
+              if (Phaser.Input.Keyboard.JustDown(keyCREDITS))
+              {
+                this.scene.start("creditsScene");
+              }
               if (this.checkCollisionR(this.player, this.rock)) {
-
+                this.sound.play('end', { volume: 0.2})
                 this.gameOver = true;
                 this.add.text(game.config.width / 2, game.config.height / 2, 'GAME OVER', this.scoreConfig).setOrigin(0.5);
-                this.add.text(game.config.width / 2, game.config.height / 2 + 64, 'Press (R) to Reset', this.scoreConfig).setOrigin(0.5);
+                this.add.text(game.config.width / 2, game.config.height / 2 + 64, 'Press (R) to Reset and (C) for Credits', this.scoreConfig).setOrigin(0.5);
                 return;
               }
               this.bow01.update()
@@ -151,22 +157,19 @@ class Kitty extends Phaser.Scene {
               }
 
               if (this.checkCollisionB(this.player, this.bow01)) {
+                this.sound.play('collect', { volume: 0.5})
                 this.p1Score += this.bow01.points;
                 this.scoreLeft.text = "Score: " + this.p1Score
+                this.rock.points = this.p1Score;
+                this.bow01.reset();
               }
               if (this.checkCollisionB(this.player, this.bow02)) {
-                // this.p1Score += 10;
+                this.sound.play('collect', { volume: 0.5})
                 this.p1Score += this.bow02.points;
                 this.scoreLeft.text = "Score: " + this.p1Score
+                this.rock.points = this.p1Score;
+                this.bow02.reset();
               }
-              // if (!this.gameOver)
-              // {
-              //   this.bow01.update()
-              // //  this.bow01.setX(Phaser.Math.Between(game.config.width * 0.2, game.config.width * 0.4));
-              //   this.rock.update()
-              // //  this.rock.setX(Phaser.Math.Between(game.config.width * 0.2, game.config.width * 0.4));
-              //   //  this.rock.reset()
-              // }
 
               playerVector.normalize()
       
